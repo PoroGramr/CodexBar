@@ -103,10 +103,10 @@ public enum ClaudeOAuthCredentialsStore {
     private static let claudeKeychainChangeCheckMinimumInterval: TimeInterval = 60
     private static let reauthenticateHint = "Run `claude` to re-authenticate."
 
-    struct ClaudeKeychainFingerprint: Codable, Equatable {
-        let modifiedAt: Int?
-        let createdAt: Int?
-        let persistentRefHash: String?
+    public struct ClaudeKeychainFingerprint: Codable, Equatable, Sendable {
+        public let modifiedAt: Int?
+        public let createdAt: Int?
+        public let persistentRefHash: String?
     }
 
     private struct ClaudeKeychainCredentialEvidence {
@@ -2096,7 +2096,8 @@ public enum ClaudeOAuthCredentialsStore {
         }
     }
 
-    private static func probeClaudeKeychainFingerprintWithoutPrompt()
+    private static func probeClaudeKeychainFingerprintWithoutPrompt(
+        allowBackgroundMonitoring: Bool = false)
     -> ClaudeKeychainProbe<ClaudeKeychainFingerprint?> {
         let mode = ClaudeOAuthKeychainPromptPreference.current()
         #if DEBUG
@@ -2107,17 +2108,23 @@ public enum ClaudeOAuthCredentialsStore {
             return .value(override)
         }
         #endif
-        guard self.shouldAllowClaudeCodeKeychainAccess(mode: mode, allowKeychainPrompt: false)
-        else { return .unavailable }
-        if self.isPromptPolicyApplicable,
-           ProviderInteractionContext.current == .background,
-           !ClaudeOAuthKeychainAccessGate.shouldAllowPrompt()
-        {
-            return .unavailable
+        if allowBackgroundMonitoring {
+            guard self.keychainAccessAllowed else { return .unavailable }
+        } else {
+            guard self.shouldAllowClaudeCodeKeychainAccess(mode: mode, allowKeychainPrompt: false)
+            else { return .unavailable }
+            if self.isPromptPolicyApplicable,
+               ProviderInteractionContext.current == .background,
+               !ClaudeOAuthKeychainAccessGate.shouldAllowPrompt()
+            {
+                return .unavailable
+            }
         }
         #if os(macOS)
-        let candidatesProbe = self.claudeKeychainCandidatesProbeWithoutPrompt(promptMode: mode)
-        let newest: ClaudeKeychainCandidate?
+        let candidatesProbe = self.claudeKeychainCandidatesProbeWithoutPrompt(
+            promptMode: mode,
+            enforcePromptPolicy: !allowBackgroundMonitoring)
+        var newest: ClaudeKeychainCandidate?
         switch candidatesProbe {
         case .unavailable:
             return .unavailable
@@ -2125,7 +2132,10 @@ public enum ClaudeOAuthCredentialsStore {
             if let first = candidates.first {
                 newest = first
             } else {
-                switch self.claudeKeychainLegacyCandidateProbeWithoutPrompt(promptMode: mode) {
+                let legacyProbe = self.claudeKeychainLegacyCandidateProbeWithoutPrompt(
+                    promptMode: mode,
+                    enforcePromptPolicy: !allowBackgroundMonitoring)
+                switch legacyProbe {
                 case .unavailable:
                     return .unavailable
                 case let .value(candidate):
@@ -2149,6 +2159,22 @@ public enum ClaudeOAuthCredentialsStore {
 
     static func currentClaudeKeychainFingerprintWithoutPromptForAuthGate() -> ClaudeKeychainFingerprint? {
         self.currentClaudeKeychainFingerprintWithoutPrompt()
+    }
+
+    /// Reads only Keychain metadata through no-UI queries. This is used to notice an external Claude login;
+    /// credential payload reads still go through the normal consent and prompt policy.
+    public static func currentClaudeKeychainFingerprintForBackgroundMonitoring(
+        enforceMinimumInterval: Bool = true) -> ClaudeKeychainFingerprint?
+    {
+        if enforceMinimumInterval {
+            guard self.shouldCheckClaudeKeychainChange() else { return nil }
+        }
+        return switch self.probeClaudeKeychainFingerprintWithoutPrompt(allowBackgroundMonitoring: true) {
+        case .unavailable:
+            nil
+        case let .value(fingerprint):
+            fingerprint
+        }
     }
 
     public static func currentCredentialsFileFingerprintWithoutPromptForAuthGate(

@@ -1265,16 +1265,7 @@ extension StatusItemController {
     }
 
     private nonisolated static func isClaudeAuthenticationRecoveryError(_ error: String) -> Bool {
-        if ClaudeOAuthUnreadableCredentialsError.matches(description: error) {
-            return true
-        }
-        return [
-            ClaudeOAuthCredentialsError.missingOAuth.localizedDescription,
-            ClaudeOAuthCredentialsError.missingAccessToken.localizedDescription,
-            ClaudeOAuthCredentialsError.notFound.localizedDescription,
-            ClaudeOAuthCredentialsError.keychainAccessRevoked.localizedDescription,
-            ClaudeOAuthCredentialsError.noRefreshToken.localizedDescription,
-        ].contains(error)
+        UsageStore.isClaudeCredentialRecoveryError(error)
     }
 
     private func menuNeedsDelayedRefreshRetry(for menu: NSMenu) -> Bool {

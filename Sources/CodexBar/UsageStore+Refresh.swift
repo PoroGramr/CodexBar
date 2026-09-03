@@ -1148,6 +1148,37 @@ extension UsageStore {
         provider == .claude && afterFetchFingerprintToken != beforeFetch?.fingerprintToken
     }
 
+    func refreshClaudeAfterKeychainChangeIfNeeded() async -> Bool {
+        guard self.error(for: .claude).map(Self.isClaudeCredentialRecoveryError) == true else { return false }
+        let environment = self.environmentBase
+        let profile = ClaudeOAuthCredentialsStore.credentialsProfileIdentifier(environment: environment)
+        let fingerprint = ClaudeOAuthCredentialsStore.currentClaudeKeychainFingerprintForBackgroundMonitoring()
+        let fingerprintToken = if let fingerprint {
+            "\(profile):\(fingerprint.modifiedAt ?? 0):\(fingerprint.createdAt ?? 0):\(fingerprint.persistentRefHash ?? "none")"
+        } else {
+            "\(profile):none"
+        }
+        let changed = self.lastClaudeKeychainFingerprintObservation != nil &&
+            self.lastClaudeKeychainFingerprintObservation != fingerprintToken
+        self.lastClaudeKeychainFingerprintObservation = fingerprintToken
+        guard changed else { return false }
+        await self.refresh(enrichmentMode: .automatic)
+        return self.error(for: .claude) == nil
+    }
+
+    nonisolated static func isClaudeCredentialRecoveryError(_ error: String) -> Bool {
+        if ClaudeOAuthUnreadableCredentialsError.matches(description: error) {
+            return true
+        }
+        return [
+            ClaudeOAuthCredentialsError.missingOAuth.localizedDescription,
+            ClaudeOAuthCredentialsError.missingAccessToken.localizedDescription,
+            ClaudeOAuthCredentialsError.notFound.localizedDescription,
+            ClaudeOAuthCredentialsError.keychainAccessRevoked.localizedDescription,
+            ClaudeOAuthCredentialsError.noRefreshToken.localizedDescription,
+        ].contains(error)
+    }
+
     private nonisolated static func captureClaudeRefreshAuthState(
         invalidateCredentialsFile: Bool,
         environment: [String: String]) async -> ClaudeRefreshAuthState
@@ -1159,18 +1190,25 @@ extension UsageStore {
                     : false
                 let fingerprintBefore = ClaudeOAuthCredentialsStore
                     .currentCredentialsFileFingerprintWithoutPromptForAuthGate(environment: environment) ?? "none"
+                let keychainFingerprintBefore = ClaudeOAuthCredentialsStore
+                    .currentClaudeKeychainFingerprintForBackgroundMonitoring(enforceMinimumInterval: false)
                 let activeAccountUuid = Self.activeClaudeAccountUuid(environment: environment)
                 let activeAccountIdentity = activeAccountUuid.map {
                     Self.claudeAccountIdentity($0, environment: environment)
                 }
                 let fingerprintAfter = ClaudeOAuthCredentialsStore
                     .currentCredentialsFileFingerprintWithoutPromptForAuthGate(environment: environment) ?? "none"
-                let accountStateWasStable = fingerprintBefore == fingerprintAfter
+                let keychainFingerprintAfter = ClaudeOAuthCredentialsStore
+                    .currentClaudeKeychainFingerprintForBackgroundMonitoring(enforceMinimumInterval: false)
+                let accountStateWasStable = fingerprintBefore == fingerprintAfter &&
+                    keychainFingerprintBefore == keychainFingerprintAfter
                 return ClaudeRefreshAuthState(
-                    fingerprintToken: fingerprintAfter,
+                    fingerprintToken: Self.claudeAuthFingerprintToken(
+                        fileFingerprint: fingerprintAfter,
+                        keychainFingerprint: keychainFingerprintAfter),
                     credentialsFileChanged: credentialsFileChanged,
-                    keychainFingerprintChanged: false,
-                    keychainPersistentRefHash: nil,
+                    keychainFingerprintChanged: keychainFingerprintBefore != keychainFingerprintAfter,
+                    keychainPersistentRefHash: keychainFingerprintAfter?.persistentRefHash,
                     activeAccountUuid: activeAccountUuid,
                     activeAccountIdentity: activeAccountIdentity,
                     accountStateWasStable: accountStateWasStable)
@@ -1186,22 +1224,37 @@ extension UsageStore {
             group.addTask {
                 let fingerprintBefore = ClaudeOAuthCredentialsStore
                     .currentCredentialsFileFingerprintWithoutPromptForAuthGate(environment: environment) ?? "none"
+                let keychainFingerprintBefore = ClaudeOAuthCredentialsStore
+                    .currentClaudeKeychainFingerprintForBackgroundMonitoring(enforceMinimumInterval: false)
                 let activeAccountUuid = Self.activeClaudeAccountUuid(environment: environment)
                 let activeAccountIdentity = activeAccountUuid.map {
                     Self.claudeAccountIdentity($0, environment: environment)
                 }
                 let fingerprintAfter = ClaudeOAuthCredentialsStore
                     .currentCredentialsFileFingerprintWithoutPromptForAuthGate(environment: environment) ?? "none"
-                let wasStable = fingerprintBefore == fingerprintAfter
+                let keychainFingerprintAfter = ClaudeOAuthCredentialsStore
+                    .currentClaudeKeychainFingerprintForBackgroundMonitoring(enforceMinimumInterval: false)
+                let wasStable = fingerprintBefore == fingerprintAfter &&
+                    keychainFingerprintBefore == keychainFingerprintAfter
                 return ClaudeHistoryAccountState(
-                    fingerprintToken: fingerprintAfter,
-                    keychainPersistentRefHash: nil,
+                    fingerprintToken: Self.claudeAuthFingerprintToken(
+                        fileFingerprint: fingerprintAfter,
+                        keychainFingerprint: keychainFingerprintAfter),
+                    keychainPersistentRefHash: keychainFingerprintAfter?.persistentRefHash,
                     activeAccountUuid: activeAccountUuid,
                     activeAccountIdentity: activeAccountIdentity,
                     wasStable: wasStable)
             }
             return await group.next()!
         }
+    }
+
+    private nonisolated static func claudeAuthFingerprintToken(
+        fileFingerprint: String,
+        keychainFingerprint: ClaudeOAuthCredentialsStore.ClaudeKeychainFingerprint?) -> String
+    {
+        guard let keychainFingerprint else { return "\(fileFingerprint)|keychain:none" }
+        return "\(fileFingerprint)|keychain:\(keychainFingerprint.modifiedAt ?? 0):\(keychainFingerprint.createdAt ?? 0):\(keychainFingerprint.persistentRefHash ?? "none")"
     }
 
     private nonisolated static func claudeOAuthActiveAccountObservation(

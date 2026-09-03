@@ -1015,6 +1015,26 @@ struct ClaudeOAuthCredentialsStoreTests {
 
         #expect(forwarded == fingerprint)
     }
+
+    @Test
+    func `background monitoring reads only the current Claude keychain fingerprint`() {
+        let fingerprint = ClaudeOAuthCredentialsStore.ClaudeKeychainFingerprint(
+            modifiedAt: 22,
+            createdAt: 18,
+            persistentRefHash: "background-monitor")
+        let store = ClaudeOAuthCredentialsStore.ClaudeKeychainOverrideStore(
+            data: nil,
+            fingerprint: fingerprint)
+
+        let observed = ClaudeOAuthCredentialsStore.withMutableClaudeKeychainOverrideStoreForTesting(store) {
+            ClaudeOAuthKeychainPromptPreference.withTaskOverrideForTesting(.never) {
+                ClaudeOAuthCredentialsStore.currentClaudeKeychainFingerprintForBackgroundMonitoring(
+                    enforceMinimumInterval: false)
+            }
+        }
+
+        #expect(observed == fingerprint)
+    }
 }
 
 #if os(macOS)

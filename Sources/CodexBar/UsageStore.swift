@@ -432,6 +432,7 @@ final class UsageStore {
     @ObservationIgnored var quotaLowHookConfigRevision: Int?
     @ObservationIgnored var predictivePaceWarningNotifiedKeys: Set<PredictivePaceWarningStateKey> = []
     @ObservationIgnored var lastPermissionPromptNotificationAt: [ProviderInstanceID: Date] = [:]
+    @ObservationIgnored var lastClaudeKeychainFingerprintObservation: String?
     @ObservationIgnored var lastTokenFetchAt: [ProviderInstanceID: Date] = [:]
     @ObservationIgnored var lastTokenFetchScope: [ProviderInstanceID: String] = [:]
     @ObservationIgnored var lastSpendDashboardTokenFetchAt: [ProviderInstanceID: Date] = [:]
@@ -925,7 +926,9 @@ final class UsageStore {
                     guard let sleepDuration = await Self.nextAdaptiveTimerSleepDuration(for: self) else { return }
                     try? await Task.sleep(for: sleepDuration)
                     guard !Task.isCancelled else { return }
-                    await self?.refresh(enrichmentMode: .automatic)
+                    if await self?.refreshClaudeAfterKeychainChangeIfNeeded() != true {
+                        await self?.refresh(enrichmentMode: .automatic)
+                    }
                 }
             }
             return
@@ -950,7 +953,9 @@ final class UsageStore {
                 interval: .seconds(wait),
                 sleepOverride: fixedTimerSleepOverride,
                 refresh: { [weak self] in
-                    await self?.refresh(enrichmentMode: .automatic)
+                    if await self?.refreshClaudeAfterKeychainChangeIfNeeded() != true {
+                        await self?.refresh(enrichmentMode: .automatic)
+                    }
                 })
         }
     }
