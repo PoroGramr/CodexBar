@@ -1158,8 +1158,11 @@ extension UsageStore {
         } else {
             "\(profile):none"
         }
-        let changed = self.lastClaudeKeychainFingerprintObservation != nil &&
-            self.lastClaudeKeychainFingerprintObservation != fingerprintToken
+        let changed = if let previous = self.lastClaudeKeychainFingerprintObservation {
+            previous != fingerprintToken
+        } else {
+            fingerprint != nil
+        }
         self.lastClaudeKeychainFingerprintObservation = fingerprintToken
         guard changed else { return false }
         await self.refresh(enrichmentMode: .automatic)
