@@ -403,6 +403,7 @@ final class UsageStore {
     @ObservationIgnored var lastStorageRefreshAt: Date?
     @ObservationIgnored var managedCodexAccountsForStorageOverride: [ManagedCodexAccount]?
     @ObservationIgnored private var pathDebugRefreshTask: Task<Void, Never>?
+    @ObservationIgnored private var claudeCredentialMonitorTask: Task<Void, Never>?
     @ObservationIgnored var resetBoundaryRefreshTask: Task<Void, Never>?
     @ObservationIgnored var scheduledResetBoundaryRefreshAt: Date?
     @ObservationIgnored var attemptedResetBoundaryRefreshes: Set<Date> = []
@@ -903,6 +904,7 @@ final class UsageStore {
 
     private func startTimer(preservingResetBoundaryRefresh: Bool = false) {
         self.timerTask?.cancel()
+        self.claudeCredentialMonitorTask?.cancel()
         self.adaptiveRefreshScheduledAt = nil
         #if DEBUG
         self.fixedRefreshIntervalForTesting = nil
@@ -910,6 +912,14 @@ final class UsageStore {
         #endif
         if !preservingResetBoundaryRefresh {
             self.cancelResetBoundaryRefresh()
+        }
+
+        self.claudeCredentialMonitorTask = Task.detached(priority: .utility) { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(60))
+                guard !Task.isCancelled else { return }
+                _ = await self?.refreshClaudeAfterKeychainChangeIfNeeded()
+            }
         }
 
         let frequency = self.settings.refreshFrequency
@@ -926,9 +936,7 @@ final class UsageStore {
                     guard let sleepDuration = await Self.nextAdaptiveTimerSleepDuration(for: self) else { return }
                     try? await Task.sleep(for: sleepDuration)
                     guard !Task.isCancelled else { return }
-                    if await self?.refreshClaudeAfterKeychainChangeIfNeeded() != true {
-                        await self?.refresh(enrichmentMode: .automatic)
-                    }
+                    await self?.refresh(enrichmentMode: .automatic)
                 }
             }
             return
@@ -953,15 +961,14 @@ final class UsageStore {
                 interval: .seconds(wait),
                 sleepOverride: fixedTimerSleepOverride,
                 refresh: { [weak self] in
-                    if await self?.refreshClaudeAfterKeychainChangeIfNeeded() != true {
-                        await self?.refresh(enrichmentMode: .automatic)
-                    }
+                    await self?.refresh(enrichmentMode: .automatic)
                 })
         }
     }
 
     deinit {
         self.timerTask?.cancel()
+        self.claudeCredentialMonitorTask?.cancel()
         self.tokenRefreshSequenceTask?.cancel()
         self.codexCostCatchUpTask?.cancel()
         self.forcedRefreshEnrichmentTask?.cancel()
