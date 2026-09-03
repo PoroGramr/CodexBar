@@ -17,9 +17,9 @@ enum ClaudeCLIUsageSpawnThrottle {
         let recordedAt: Date
     }
 
-    /// Matches the repo's existing 15-minute floor precedent for expensive local work
-    /// (`UsageStore.minimumTokenFetchTTL`).
-    static let minimumBackgroundSpawnInterval: TimeInterval = 15 * 60
+    /// Keep background CLI refreshes aligned with the default regular usage refresh cadence. The
+    /// Claude plan snapshot must not remain stale for three five-minute refresh cycles after an auth change.
+    static let minimumBackgroundSpawnInterval: TimeInterval = 5 * 60
 
     final class Store: @unchecked Sendable {
         private let lock = NSLock()
