@@ -764,6 +764,11 @@ extension UsageStore {
             }
             self.lastSourceLabels[provider.instanceID] = result.sourceLabel
             self.recordProviderFetchSuccessErrorState(provider: provider)
+            if provider == .claude, result.strategyKind == .cli {
+                // A successful CLI fallback is authoritative for the displayed quota. Do not retain
+                // an earlier OAuth failure beside the valid CLI snapshot.
+                self.errors[provider.instanceID] = nil
+            }
             self.diagnostics[provider.instanceID] = result.diagnostic
             if let tokenAccount = currentTokenAccount {
                 self.cacheTokenAccountSnapshot(
