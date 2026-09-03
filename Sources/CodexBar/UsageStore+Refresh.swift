@@ -1191,7 +1191,7 @@ extension UsageStore {
                 let fingerprintBefore = ClaudeOAuthCredentialsStore
                     .currentCredentialsFileFingerprintWithoutPromptForAuthGate(environment: environment) ?? "none"
                 let keychainFingerprintBefore = ClaudeOAuthCredentialsStore
-                    .currentClaudeKeychainFingerprintForBackgroundMonitoring(enforceMinimumInterval: false)
+                    .currentClaudeKeychainFingerprintForBackgroundMonitoring()
                 let activeAccountUuid = Self.activeClaudeAccountUuid(environment: environment)
                 let activeAccountIdentity = activeAccountUuid.map {
                     Self.claudeAccountIdentity($0, environment: environment)
@@ -1199,7 +1199,7 @@ extension UsageStore {
                 let fingerprintAfter = ClaudeOAuthCredentialsStore
                     .currentCredentialsFileFingerprintWithoutPromptForAuthGate(environment: environment) ?? "none"
                 let keychainFingerprintAfter = ClaudeOAuthCredentialsStore
-                    .currentClaudeKeychainFingerprintForBackgroundMonitoring(enforceMinimumInterval: false)
+                    .currentClaudeKeychainFingerprintForBackgroundMonitoring() ?? keychainFingerprintBefore
                 let accountStateWasStable = fingerprintBefore == fingerprintAfter &&
                     keychainFingerprintBefore == keychainFingerprintAfter
                 return ClaudeRefreshAuthState(
@@ -1225,7 +1225,7 @@ extension UsageStore {
                 let fingerprintBefore = ClaudeOAuthCredentialsStore
                     .currentCredentialsFileFingerprintWithoutPromptForAuthGate(environment: environment) ?? "none"
                 let keychainFingerprintBefore = ClaudeOAuthCredentialsStore
-                    .currentClaudeKeychainFingerprintForBackgroundMonitoring(enforceMinimumInterval: false)
+                    .currentClaudeKeychainFingerprintForBackgroundMonitoring()
                 let activeAccountUuid = Self.activeClaudeAccountUuid(environment: environment)
                 let activeAccountIdentity = activeAccountUuid.map {
                     Self.claudeAccountIdentity($0, environment: environment)
@@ -1233,7 +1233,7 @@ extension UsageStore {
                 let fingerprintAfter = ClaudeOAuthCredentialsStore
                     .currentCredentialsFileFingerprintWithoutPromptForAuthGate(environment: environment) ?? "none"
                 let keychainFingerprintAfter = ClaudeOAuthCredentialsStore
-                    .currentClaudeKeychainFingerprintForBackgroundMonitoring(enforceMinimumInterval: false)
+                    .currentClaudeKeychainFingerprintForBackgroundMonitoring() ?? keychainFingerprintBefore
                 let wasStable = fingerprintBefore == fingerprintAfter &&
                     keychainFingerprintBefore == keychainFingerprintAfter
                 return ClaudeHistoryAccountState(
