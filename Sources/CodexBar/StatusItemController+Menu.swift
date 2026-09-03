@@ -1210,21 +1210,25 @@ extension StatusItemController {
                 return
             }
             self.deferredMenuInteractionRefreshProviders.formUnion(retryInstanceIDs)
-            await ProviderInteractionContext.$current.withValue(.background) {
-                if plan.scheduling == .concurrent {
-                    // Refresh concurrently so one slow provider doesn't delay the rest, mirroring the
-                    // periodic refresh in `UsageStore.runRefresh`. `coalesceIfRefreshing` makes each call
-                    // wait for any in-flight refresh (e.g. a manual refresh) instead of overriding it.
-                    await withTaskGroup(of: Void.self) { group in
-                        for provider in retryProviders {
-                            group.addTask {
+            if plan.scheduling == .concurrent {
+                // Refresh concurrently so one slow provider doesn't delay the rest, mirroring the
+                // periodic refresh in `UsageStore.runRefresh`. `coalesceIfRefreshing` makes each call
+                // wait for any in-flight refresh (e.g. a manual refresh) instead of overriding it.
+                await withTaskGroup(of: Void.self) { group in
+                    for provider in retryProviders {
+                        let interaction = self.openMenuRefreshInteraction(for: provider)
+                        group.addTask {
+                            await ProviderInteractionContext.$current.withValue(interaction) {
                                 await self.store.refreshProvider(provider, coalesceIfRefreshing: true)
                             }
                         }
                     }
-                } else {
-                    for provider in retryProviders {
-                        guard !Task.isCancelled else { return }
+                }
+            } else {
+                for provider in retryProviders {
+                    guard !Task.isCancelled else { return }
+                    let interaction = self.openMenuRefreshInteraction(for: provider)
+                    await ProviderInteractionContext.$current.withValue(interaction) {
                         await self.store.refreshProvider(provider, coalesceIfRefreshing: true)
                     }
                 }
@@ -1242,6 +1246,35 @@ extension StatusItemController {
                 deferOpenParentMenuRebuild: false,
                 allowStaleContentDuringDataRefresh: true)
         }
+    }
+
+    private func openMenuRefreshInteraction(for provider: UsageProvider) -> ProviderInteraction {
+        Self.openMenuRefreshInteraction(provider: provider, error: self.store.error(for: provider))
+    }
+
+    nonisolated static func openMenuRefreshInteraction(
+        provider: UsageProvider,
+        error: String?) -> ProviderInteraction
+    {
+        guard provider == .claude, let error, self.isClaudeAuthenticationRecoveryError(error) else {
+            return .background
+        }
+        // Opening the affected provider menu is a user action, so the default Keychain policy may
+        // discover credentials written by an external `claude auth login` without requiring Refresh.
+        return .userInitiated
+    }
+
+    private nonisolated static func isClaudeAuthenticationRecoveryError(_ error: String) -> Bool {
+        if ClaudeOAuthUnreadableCredentialsError.matches(description: error) {
+            return true
+        }
+        return [
+            ClaudeOAuthCredentialsError.missingOAuth.localizedDescription,
+            ClaudeOAuthCredentialsError.missingAccessToken.localizedDescription,
+            ClaudeOAuthCredentialsError.notFound.localizedDescription,
+            ClaudeOAuthCredentialsError.keychainAccessRevoked.localizedDescription,
+            ClaudeOAuthCredentialsError.noRefreshToken.localizedDescription,
+        ].contains(error)
     }
 
     private func menuNeedsDelayedRefreshRetry(for menu: NSMenu) -> Bool {

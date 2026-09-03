@@ -57,6 +57,7 @@ struct ClaudeWebRecoveryMenuTests {
         selectedSessionKey: Bool = false,
         authenticatedAccountEmail: String? = nil,
         authenticatedOAuthWithoutEmail: Bool = false,
+        authenticatedCLIWithoutIdentity: Bool = false,
         claudeSwapAccountCount: Int = 0,
         attempts: [ProviderFetchAttempt] = []) -> [(String, MenuDescriptor.MenuAction)]
     {
@@ -72,10 +73,10 @@ struct ClaudeWebRecoveryMenuTests {
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
         store.claudeSwapAccountSnapshots = Self.claudeSwapAccounts(count: claudeSwapAccountCount)
-        if authenticatedAccountEmail != nil || authenticatedOAuthWithoutEmail {
+        if authenticatedAccountEmail != nil || authenticatedOAuthWithoutEmail || authenticatedCLIWithoutIdentity {
             store._setSnapshotForTesting(
                 UsageSnapshot(
-                    primary: authenticatedOAuthWithoutEmail
+                    primary: authenticatedOAuthWithoutEmail || authenticatedCLIWithoutIdentity
                         ? RateWindow(
                             usedPercent: 25,
                             windowMinutes: 5 * 60,
@@ -84,11 +85,13 @@ struct ClaudeWebRecoveryMenuTests {
                         : nil,
                     secondary: nil,
                     updatedAt: Date(),
-                    identity: ProviderIdentitySnapshot(
-                        providerID: .claude,
-                        accountEmail: authenticatedAccountEmail,
-                        accountOrganization: nil,
-                        loginMethod: "Claude Pro")),
+                    identity: authenticatedCLIWithoutIdentity
+                        ? nil
+                        : ProviderIdentitySnapshot(
+                            providerID: .claude,
+                            accountEmail: authenticatedAccountEmail,
+                            accountOrganization: nil,
+                            loginMethod: "Claude Pro")),
                 provider: .claude)
         }
         store.errors[.claude] = error
@@ -155,6 +158,15 @@ struct ClaudeWebRecoveryMenuTests {
         #expect(actions.contains {
             $0.0 == "Switch Account..." && $0.1 == .switchAccount(.claude)
         })
+        #expect(!actions.contains { $0.0 == "Sign in with Claude Code..." })
+    }
+
+    @Test
+    func `successful Claude CLI usage without identity hides sign in`() {
+        let actions = self.actions(
+            source: .auto,
+            authenticatedCLIWithoutIdentity: true)
+
         #expect(!actions.contains { $0.0 == "Sign in with Claude Code..." })
     }
 
