@@ -1486,6 +1486,8 @@
 "Total usage" = "合計使用量";
 "claude_oauth_keychain_access_revoked" = "Claude Code のトークン更新により、Claude キーチェーンへのアクセスが取り消されました。「更新」をクリックしてアクセスを再許可するか、Claude の使用量の取得元を CLI/Web に切り替えてください。";
 "claude_showing_last_known_usage" = "最後に取得した既知の使用量を表示しています（取得: %@）。";
+"claude_authentication_required_notification_title" = "Claude の認証が必要です";
+"claude_authentication_required_notification_body" = "Claude OAuth 認証情報が見つかりません。`claude auth login --claudeai` を実行してから CodexBar を更新してください。";
 /* Spend dashboard cost analysis */
 "90d" = "90d";
 "Input" = "Input";

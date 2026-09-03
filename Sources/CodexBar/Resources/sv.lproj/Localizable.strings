@@ -1484,6 +1484,8 @@
 "Total usage" = "Total användning";
 "claude_oauth_keychain_access_revoked" = "Åtkomsten till Claudes nyckelring återkallades när Claude Code roterade token. Klicka på Uppdatera för att ge åtkomst igen, eller byt Claudes användningskälla till CLI/Web.";
 "claude_showing_last_known_usage" = "Visar senast kända användning, registrerad %@.";
+"claude_authentication_required_notification_title" = "Claude-autentisering krävs";
+"claude_authentication_required_notification_body" = "CodexBar kunde inte hitta OAuth-uppgifter för Claude. Kör `claude auth login --claudeai` och uppdatera sedan CodexBar.";
 /* Spend dashboard cost analysis */
 "90d" = "90d";
 "Input" = "Input";

@@ -1486,6 +1486,8 @@
 "Total usage" = "Uso total";
 "claude_oauth_keychain_access_revoked" = "O acesso às Chaves do Claude foi revogado pela rotação do token do Claude Code. Clique em Atualizar para conceder o acesso novamente ou altere a fonte de uso do Claude para CLI/Web.";
 "claude_showing_last_known_usage" = "Exibindo o último uso conhecido, capturado %@.";
+"claude_authentication_required_notification_title" = "Autenticação do Claude necessária";
+"claude_authentication_required_notification_body" = "O CodexBar não encontrou as credenciais OAuth do Claude. Execute `claude auth login --claudeai` e atualize o CodexBar.";
 /* Spend dashboard cost analysis */
 "90d" = "90d";
 "Input" = "Input";

@@ -1487,6 +1487,8 @@
 "Total usage" = "Общее использование";
 "claude_oauth_keychain_access_revoked" = "Доступ к Связке ключей Claude был отозван из-за ротации токена в Claude Code. Нажмите «Обновить», чтобы повторно предоставить доступ, или переключите источник использования Claude на CLI/Web.";
 "claude_showing_last_known_usage" = "Показаны последние известные данные об использовании (получены %@).";
+"claude_authentication_required_notification_title" = "Требуется авторизация Claude";
+"claude_authentication_required_notification_body" = "CodexBar не удалось найти учётные данные OAuth Claude. Выполните `claude auth login --claudeai`, затем обновите CodexBar.";
 /* Spend dashboard cost analysis */
 "90d" = "90d";
 "Input" = "Input";

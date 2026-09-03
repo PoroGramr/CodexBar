@@ -1458,6 +1458,7 @@ extension UsageStore {
             }
             if shouldSurface {
                 self.errors[provider.instanceID] = error.localizedDescription
+                self.updateClaudeOAuthCredentialsMissingNotification(provider: provider, error: error)
                 if !preservesPriorData, !preservesClaudeWebSessionFailure {
                     self.snapshots.removeValue(forKey: provider.instanceID)
                     // Provider-specific by design: local ~/.grok/sessions tokens remain readable
@@ -1612,5 +1613,51 @@ extension UsageStore {
             title: L("%@ is waiting for permission", providerName),
             body: error.localizedDescription,
             soundEnabled: false)
+    }
+
+    private func updateClaudeOAuthCredentialsMissingNotification(provider: UsageProvider, error: Error) {
+        guard ClaudeAuthenticationWarningLogic.shouldNotify(provider: provider, error: error) else {
+            if provider == .claude {
+                self.claudeOAuthCredentialsMissingNotificationActive = false
+            }
+            return
+        }
+        guard !self.claudeOAuthCredentialsMissingNotificationActive else { return }
+
+        self.claudeOAuthCredentialsMissingNotificationActive = true
+        let copy = ClaudeAuthenticationWarningLogic.notificationCopy()
+        AppNotifications.shared.post(
+            idPrefix: "claude-oauth-credentials-missing",
+            title: copy.title,
+            body: copy.body,
+            soundEnabled: false)
+    }
+}
+
+enum ClaudeAuthenticationWarningLogic {
+    nonisolated static func shouldNotify(provider: UsageProvider, error: Error) -> Bool {
+        guard provider == .claude else { return false }
+        if let oauthError = error as? ClaudeOAuthCredentialsError {
+            switch oauthError {
+            case .missingOAuth, .missingAccessToken, .notFound, .noRefreshToken:
+                return true
+            default:
+                return false
+            }
+        }
+
+        return [
+            ClaudeOAuthCredentialsError.missingOAuth.localizedDescription,
+            ClaudeOAuthCredentialsError.missingAccessToken.localizedDescription,
+            ClaudeOAuthCredentialsError.notFound.localizedDescription,
+            ClaudeOAuthCredentialsError.noRefreshToken.localizedDescription,
+        ].contains(error.localizedDescription)
+    }
+
+    @MainActor
+    static func notificationCopy() -> (title: String, body: String) {
+        (
+            L("claude_authentication_required_notification_title"),
+            L("claude_authentication_required_notification_body"))
     }
 }

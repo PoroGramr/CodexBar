@@ -1488,6 +1488,8 @@
 "Total usage" = "Ús total";
 "claude_oauth_keychain_access_revoked" = "L'accés al clauer de Claude s'ha revocat per la rotació del token de Claude Code. Feu clic a Actualitza per tornar a concedir l'accés, o canvieu l'origen d'ús de Claude a CLI/Web.";
 "claude_showing_last_known_usage" = "Es mostra l'últim ús conegut capturat %@.";
+"claude_authentication_required_notification_title" = "Cal autenticar Claude";
+"claude_authentication_required_notification_body" = "CodexBar no ha trobat les credencials OAuth de Claude. Executeu `claude auth login --claudeai` i actualitzeu CodexBar.";
 /* Spend dashboard cost analysis */
 "90d" = "90d";
 "Input" = "Entrada";

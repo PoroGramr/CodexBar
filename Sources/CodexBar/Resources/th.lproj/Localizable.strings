@@ -1489,6 +1489,8 @@
 "Total usage" = "การใช้งานทั้งหมด";
 "claude_oauth_keychain_access_revoked" = "สิทธิ์เข้าถึงพวงกุญแจ Claude ถูกเพิกถอนจากการหมุนเวียนโทเค็นของ Claude Code คลิกรีเฟรชเพื่อให้สิทธิ์อีกครั้ง หรือเปลี่ยนแหล่งที่มาการใช้งาน Claude เป็น CLI/Web";
 "claude_showing_last_known_usage" = "กำลังแสดงการใช้งานล่าสุดที่ทราบ ซึ่งบันทึกเมื่อ %@";
+"claude_authentication_required_notification_title" = "ต้องยืนยันตัวตน Claude";
+"claude_authentication_required_notification_body" = "CodexBar ไม่พบข้อมูลรับรอง OAuth ของ Claude โปรดเรียกใช้ `claude auth login --claudeai` แล้วรีเฟรช CodexBar";
 /* Spend dashboard cost analysis */
 "90d" = "90d";
 "Input" = "Input";

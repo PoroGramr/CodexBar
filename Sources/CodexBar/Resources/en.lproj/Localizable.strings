@@ -8,6 +8,8 @@
 "ollama_browser_cookie_decryption_disabled" = "%@ cookie decryption is disabled in CodexBar; enable Keychain access and refresh.";
 "claude_oauth_keychain_access_revoked" = "Claude Keychain access was revoked by Claude Code's token rotation. Click Refresh to re-grant access, or switch Claude Usage source to CLI/Web.";
 "claude_showing_last_known_usage" = "Showing last-known usage captured %@.";
+"claude_authentication_required_notification_title" = "Claude authentication required";
+"claude_authentication_required_notification_body" = "CodexBar could not find Claude OAuth credentials. Run `claude auth login --claudeai`, then refresh CodexBar.";
 
 " providers" = " providers";
 "(System)" = "(System)";

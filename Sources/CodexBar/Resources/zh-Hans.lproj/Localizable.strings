@@ -1486,6 +1486,8 @@
 "Total usage" = "总用量";
 "claude_oauth_keychain_access_revoked" = "Claude Code 轮换令牌后撤销了对 Claude 钥匙串的访问权限。点击“刷新”以重新授权，或将 Claude 用量来源切换为 CLI/Web。";
 "claude_showing_last_known_usage" = "正在显示 %@ 采集的最后已知用量。";
+"claude_authentication_required_notification_title" = "需要进行 Claude 身份验证";
+"claude_authentication_required_notification_body" = "CodexBar 找不到 Claude OAuth 凭据。请运行 `claude auth login --claudeai`，然后刷新 CodexBar。";
 
 "menu_bar_layout_token_conditional" = "条件";
 "menu_bar_layout_group_conditionals" = "条件";
