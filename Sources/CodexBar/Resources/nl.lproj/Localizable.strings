@@ -1485,8 +1485,6 @@
 "Total usage" = "Totaal gebruik";
 "claude_oauth_keychain_access_revoked" = "De toegang tot de Claude-sleutelhanger is ingetrokken door de tokenrotatie van Claude Code. Klik op Vernieuwen om opnieuw toegang te verlenen of zet de Claude-gebruiksbron op CLI/Web.";
 "claude_showing_last_known_usage" = "De laatst bekende gebruiksgegevens worden weergegeven (vastgelegd: %@).";
-"claude_authentication_required_notification_title" = "Claude-authenticatie vereist";
-"claude_authentication_required_notification_body" = "CodexBar kon geen Claude OAuth-inloggegevens vinden. Voer `claude auth login --claudeai` uit en vernieuw daarna CodexBar.";
 /* Spend dashboard cost analysis */
 "90d" = "90d";
 "Input" = "Input";

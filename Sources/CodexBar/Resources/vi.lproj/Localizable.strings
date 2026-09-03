@@ -1486,8 +1486,6 @@
 "Total usage" = "Tổng mức sử dụng";
 "claude_oauth_keychain_access_revoked" = "Quyền truy cập Chuỗi khóa Claude đã bị thu hồi do Claude Code xoay vòng mã thông báo. Nhấp vào Làm mới để cấp lại quyền truy cập hoặc chuyển nguồn sử dụng Claude sang CLI/Web.";
 "claude_showing_last_known_usage" = "Đang hiển thị mức sử dụng đã biết gần nhất, được ghi nhận %@.";
-"claude_authentication_required_notification_title" = "Cần xác thực Claude";
-"claude_authentication_required_notification_body" = "CodexBar không tìm thấy thông tin xác thực OAuth của Claude. Chạy `claude auth login --claudeai`, sau đó làm mới CodexBar.";
 /* Spend dashboard cost analysis */
 "90d" = "90d";
 "Input" = "Input";

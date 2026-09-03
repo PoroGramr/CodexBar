@@ -3,7 +3,7 @@
 ## Unreleased
 
 ### Fixed
-- Claude: notify once when OAuth credentials are missing, with a re-authentication command, and re-arm the warning after a successful refresh.
+- Claude: recover automatically after an external CLI login when opening a menu that previously reported missing OAuth credentials, without requiring a manual refresh.
 - Settings: open the About pane from the application menu as well as the status menu, reusing the existing Settings window (#3391). Thanks @elijahfriedman!
 - Menu bar: discard non-finite saved status-item positions before AppKit restores them, preserving valid placements (#3361; investigated alongside #3355). Thanks @foobra!
 - Antigravity: recover Linux port discovery when `lsof` fails with mount-namespace warnings, while preserving authentication errors and the existing startup deadline (#3364). Thanks @srijits!

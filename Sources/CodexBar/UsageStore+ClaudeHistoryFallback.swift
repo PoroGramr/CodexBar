@@ -22,9 +22,6 @@ extension UsageStore {
 
     func recordProviderFetchSuccessErrorState(provider: UsageProvider) {
         self.errors[provider.instanceID] = nil
-        if provider == .claude {
-            self.claudeOAuthCredentialsMissingNotificationActive = false
-        }
         self.clearClaudeHistoryFallbackEligibility(provider: provider)
     }
 

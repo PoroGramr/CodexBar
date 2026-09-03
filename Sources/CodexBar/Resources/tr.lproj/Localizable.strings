@@ -1487,8 +1487,6 @@
 "Total usage" = "Toplam kullanım";
 "claude_oauth_keychain_access_revoked" = "Claude Anahtar Zinciri erişimi, Claude Code'un token yenilemesi nedeniyle iptal edildi. Erişimi yeniden vermek için Yenile'ye tıklayın veya Claude kullanım kaynağını CLI/Web olarak değiştirin.";
 "claude_showing_last_known_usage" = "Bilinen son kullanım gösteriliyor (yakalanma zamanı: %@).";
-"claude_authentication_required_notification_title" = "Claude kimlik doğrulaması gerekli";
-"claude_authentication_required_notification_body" = "CodexBar, Claude OAuth kimlik bilgilerini bulamadı. `claude auth login --claudeai` komutunu çalıştırın ve ardından CodexBar’ı yenileyin.";
 /* Spend dashboard cost analysis */
 "90d" = "90d";
 "Input" = "Girdi";

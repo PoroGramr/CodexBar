@@ -1486,8 +1486,6 @@
 "Total usage" = "Gesamtnutzung";
 "claude_oauth_keychain_access_revoked" = "Der Zugriff auf den Claude-Schlüsselbund wurde durch die Token-Rotation von Claude Code widerrufen. Klicken Sie auf „Aktualisieren“, um den Zugriff erneut zu gewähren, oder stellen Sie die Claude-Nutzungsquelle auf CLI/Web um.";
 "claude_showing_last_known_usage" = "Letzte bekannte Nutzung wird angezeigt (erfasst: %@).";
-"claude_authentication_required_notification_title" = "Claude-Authentifizierung erforderlich";
-"claude_authentication_required_notification_body" = "CodexBar konnte keine Claude-OAuth-Anmeldedaten finden. Führe `claude auth login --claudeai` aus und aktualisiere danach CodexBar.";
 /* Spend dashboard cost analysis */
 "90d" = "90d";
 "Input" = "Input";

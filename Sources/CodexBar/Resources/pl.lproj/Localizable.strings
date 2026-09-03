@@ -1489,8 +1489,6 @@
 "Total usage" = "Łączne użycie";
 "claude_oauth_keychain_access_revoked" = "Dostęp do pęku kluczy Claude został cofnięty wskutek rotacji tokenu przez Claude Code. Kliknij Odśwież, aby ponownie przyznać dostęp, albo przełącz źródło użycia Claude na CLI/Web.";
 "claude_showing_last_known_usage" = "Wyświetlane jest ostatnie znane użycie zarejestrowane %@.";
-"claude_authentication_required_notification_title" = "Wymagane uwierzytelnienie Claude";
-"claude_authentication_required_notification_body" = "CodexBar nie znalazł danych logowania OAuth Claude. Uruchom `claude auth login --claudeai`, a następnie odśwież CodexBar.";
 /* Spend dashboard cost analysis */
 "90d" = "90d";
 "Input" = "Input";

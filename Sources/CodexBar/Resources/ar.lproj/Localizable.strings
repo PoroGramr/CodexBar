@@ -1489,8 +1489,6 @@
 "Total usage" = "إجمالي الاستخدام";
 "claude_oauth_keychain_access_revoked" = "تم إلغاء وصول CodexBar إلى سلسلة مفاتيح Claude بسبب تدوير الرمز المميز في Claude Code. انقر على «تحديث» لمنح الوصول مجددًا، أو بدّل مصدر استخدام Claude إلى CLI/Web.";
 "claude_showing_last_known_usage" = "يتم عرض آخر بيانات استخدام معروفة، تم التقاطها %@.";
-"claude_authentication_required_notification_title" = "مطلوب توثيق Claude";
-"claude_authentication_required_notification_body" = "تعذر على CodexBar العثور على بيانات اعتماد Claude OAuth. شغّل `claude auth login --claudeai`، ثم حدّث CodexBar.";
 /* Spend dashboard cost analysis */
 "90d" = "90d";
 "Input" = "Input";

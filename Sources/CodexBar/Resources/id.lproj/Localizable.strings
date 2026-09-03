@@ -1489,8 +1489,6 @@
 "Total usage" = "Total penggunaan";
 "claude_oauth_keychain_access_revoked" = "Akses Rantai Kunci Claude dicabut akibat rotasi token Claude Code. Klik Segarkan untuk memberikan akses lagi, atau ubah sumber penggunaan Claude ke CLI/Web.";
 "claude_showing_last_known_usage" = "Menampilkan penggunaan terakhir yang diketahui, diambil %@.";
-"claude_authentication_required_notification_title" = "Autentikasi Claude diperlukan";
-"claude_authentication_required_notification_body" = "CodexBar tidak dapat menemukan kredensial OAuth Claude. Jalankan `claude auth login --claudeai`, lalu segarkan CodexBar.";
 /* Spend dashboard cost analysis */
 "90d" = "90d";
 "Input" = "Input";
