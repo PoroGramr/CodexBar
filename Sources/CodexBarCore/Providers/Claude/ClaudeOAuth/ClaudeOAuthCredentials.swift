@@ -1020,7 +1020,9 @@ public enum ClaudeOAuthCredentialsStore {
             case .never:
                 return false
             case .onlyOnUserAction:
-                if ProviderInteractionContext.current != .userInitiated {
+                if ProviderInteractionContext.current != .userInitiated,
+                   !ClaudeAutomaticCredentialRecoveryContext.isActive
+                {
                     if ProcessInfo.processInfo.environment["CODEXBAR_DEBUG_CLAUDE_OAUTH_FLOW"] == "1" {
                         ClaudeOAuthCredentialsStore.log.debug(
                             "Claude OAuth keychain freshness sync skipped (background)",
@@ -2151,6 +2153,31 @@ public enum ClaudeOAuthCredentialsStore {
         self.currentClaudeKeychainFingerprintWithoutPrompt()
     }
 
+    public static func currentCredentialFingerprintWithoutPromptForBackgroundMonitoring(
+        environment: [String: String] = ProcessInfo.processInfo.environment) -> String?
+    {
+        let profileIdentifier = self.credentialsProfileIdentifier(environment: environment)
+        let fileFingerprint = self.currentCredentialsFileFingerprintWithoutPromptForAuthGate(
+            environment: environment)
+        let keychainFingerprint: ClaudeKeychainFingerprint? = if self.keychainAccessAllowed,
+                                                                 ClaudeOAuthKeychainPromptPreference.current() != .never
+        {
+            self.currentClaudeKeychainFingerprintWithoutPrompt()
+        } else {
+            nil
+        }
+        guard fileFingerprint != nil || keychainFingerprint != nil else { return nil }
+
+        let material = [
+            "profile=\(profileIdentifier)",
+            "file=\(fileFingerprint ?? "none")",
+            "keychainModified=\(keychainFingerprint?.modifiedAt?.description ?? "none")",
+            "keychainCreated=\(keychainFingerprint?.createdAt?.description ?? "none")",
+            "keychainRef=\(keychainFingerprint?.persistentRefHash ?? "none")",
+        ].joined(separator: "\n")
+        return self.sha256Hex(Data(material.utf8))
+    }
+
     public static func currentCredentialsFileFingerprintWithoutPromptForAuthGate(
         environment: [String: String] = ProcessInfo.processInfo.environment) -> String?
     {
@@ -3071,7 +3098,8 @@ public enum ClaudeOAuthCredentialsStore {
         case .never:
             return false
         case .onlyOnUserAction:
-            return ProviderInteractionContext.current == .userInitiated
+            return ProviderInteractionContext.current == .userInitiated ||
+                ClaudeAutomaticCredentialRecoveryContext.isActive
         case .always: return true
         }
     }

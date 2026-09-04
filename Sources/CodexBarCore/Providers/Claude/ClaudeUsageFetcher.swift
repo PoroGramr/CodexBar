@@ -320,9 +320,11 @@ public struct ClaudeUsageFetcher: ClaudeUsageFetching, Sendable {
         func load(allowDelegatedRetry: Bool) async throws -> ClaudeUsageSnapshot {
             do {
                 let promptPolicy = ClaudeUsageFetcher.currentClaudeOAuthInteractivePromptPolicy()
+                let allowKeychainPrompt = ClaudeAutomaticCredentialRecoveryContext.isActive &&
+                    promptPolicy.mode != .never
                 let credentialRecord = try await ClaudeUsageFetcher.loadOAuthCredentialRecord(
                     environment: self.fetcher.environment,
-                    allowKeychainPrompt: false,
+                    allowKeychainPrompt: allowKeychainPrompt,
                     respectKeychainPromptCooldown: promptPolicy.shouldRespectKeychainPromptCooldown,
                     safeCredentialSourcesOnly: self.fetcher.oauthSafeCredentialSourcesOnly,
                     clearInvalidCache: !self.fetcher.preserveInvalidOAuthCache)
@@ -442,7 +444,8 @@ public struct ClaudeUsageFetcher: ClaudeUsageFetching, Sendable {
                     delegatedOutcome: delegatedOutcome,
                     didSyncSilently: didSyncSilently,
                     policy: promptPolicy)
-                let retryAllowKeychainPrompt = false
+                let retryAllowKeychainPrompt = ClaudeAutomaticCredentialRecoveryContext.isActive &&
+                    promptPolicy.mode != .never
                 if ClaudeUsageFetcher.isClaudeOAuthFlowDebugEnabled {
                     ClaudeUsageFetcher.log.debug(
                         "Claude OAuth credential load (post-delegation retry start)",

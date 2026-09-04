@@ -1164,6 +1164,12 @@ extension StatusItemController {
         if !providersNeedingRetryAtOpen.isEmpty {
             self.deferMenuInteractionRefreshIfNeeded(providers: providersNeedingRetryAtOpen)
         }
+        let userInitiatedRecoveryProviderIDs = Set(providersNeedingRetryAtOpen.filter {
+            Self.openMenuRefreshInteraction(
+                provider: $0,
+                error: self.store.error(for: $0),
+                wasVisibleRetryAtOpen: true) == .userInitiated
+        }.map(\.instanceID))
         let key = ObjectIdentifier(menu)
         self.menuRefreshTasks[key]?.cancel()
         self.menuRefreshTasks[key] = Task { @MainActor [weak self, weak menu] in
@@ -1210,21 +1216,27 @@ extension StatusItemController {
                 return
             }
             self.deferredMenuInteractionRefreshProviders.formUnion(retryInstanceIDs)
-            await ProviderInteractionContext.$current.withValue(.background) {
-                if plan.scheduling == .concurrent {
-                    // Refresh concurrently so one slow provider doesn't delay the rest, mirroring the
-                    // periodic refresh in `UsageStore.runRefresh`. `coalesceIfRefreshing` makes each call
-                    // wait for any in-flight refresh (e.g. a manual refresh) instead of overriding it.
-                    await withTaskGroup(of: Void.self) { group in
-                        for provider in retryProviders {
-                            group.addTask {
+            if plan.scheduling == .concurrent {
+                // Refresh concurrently so one slow provider doesn't delay the rest, mirroring the
+                // periodic refresh in `UsageStore.runRefresh`. `coalesceIfRefreshing` makes each call
+                // wait for any in-flight refresh (e.g. a manual refresh) instead of overriding it.
+                await withTaskGroup(of: Void.self) { group in
+                    for provider in retryProviders {
+                        let interaction: ProviderInteraction = userInitiatedRecoveryProviderIDs
+                            .contains(provider.instanceID) ? .userInitiated : .background
+                        group.addTask {
+                            await ProviderInteractionContext.$current.withValue(interaction) {
                                 await self.store.refreshProvider(provider, coalesceIfRefreshing: true)
                             }
                         }
                     }
-                } else {
-                    for provider in retryProviders {
-                        guard !Task.isCancelled else { return }
+                }
+            } else {
+                for provider in retryProviders {
+                    if Task.isCancelled { break }
+                    let interaction: ProviderInteraction = userInitiatedRecoveryProviderIDs
+                        .contains(provider.instanceID) ? .userInitiated : .background
+                    await ProviderInteractionContext.$current.withValue(interaction) {
                         await self.store.refreshProvider(provider, coalesceIfRefreshing: true)
                     }
                 }
@@ -1242,6 +1254,25 @@ extension StatusItemController {
                 deferOpenParentMenuRebuild: false,
                 allowStaleContentDuringDataRefresh: true)
         }
+    }
+
+    nonisolated static func openMenuRefreshInteraction(
+        provider: UsageProvider,
+        error: String?,
+        wasVisibleRetryAtOpen: Bool) -> ProviderInteraction
+    {
+        // Provider-specific by design: only Claude stores subscription OAuth in a Keychain item whose prompt
+        // policy distinguishes user-opened menu retries from background refreshes.
+        guard wasVisibleRetryAtOpen,
+              provider == .claude,
+              let error,
+              ClaudeCredentialRecoveryErrorClassifier.matches(error)
+        else {
+            return .background
+        }
+        // Opening the affected provider menu is a user action, so the default Keychain policy may
+        // discover credentials written by an external `claude auth login` without requiring Refresh.
+        return .userInitiated
     }
 
     private func menuNeedsDelayedRefreshRetry(for menu: NSMenu) -> Bool {

@@ -353,6 +353,12 @@ final class UsageStore {
         [ProviderInstanceID: ProviderAvailabilityCacheEntry] = [:]
     @ObservationIgnored var accountInfoCache: [ProviderInstanceID: AccountInfoCacheEntry] = [:]
     @ObservationIgnored private var timerTask: Task<Void, Never>?
+    @ObservationIgnored var claudeCredentialRecoveryMonitorTask: Task<Void, Never>?
+    @ObservationIgnored var lastClaudeCredentialRecoveryFingerprint: String?
+    #if DEBUG
+    @ObservationIgnored var _test_claudeCredentialFingerprintProbeOverride: (@MainActor () async -> String?)?
+    @ObservationIgnored var claudeCredentialRecoverySleepOverrideForTesting: Duration?
+    #endif
     /// In-memory only; resets on every launch.
     @ObservationIgnored private(set) var lastMenuOpenAt: Date?
     /// Latest local Codex/Claude transcript activity observed by the existing session scanner.
@@ -898,10 +904,16 @@ final class UsageStore {
         self.refreshTimerSleepOverrideForTesting = duration
         self.startTimer()
     }
+
+    func restartTimersForClaudeCredentialRecoveryTesting(credentialSleep: Duration) {
+        self.claudeCredentialRecoverySleepOverrideForTesting = credentialSleep
+        self.startTimer()
+    }
     #endif
 
     private func startTimer(preservingResetBoundaryRefresh: Bool = false) {
         self.timerTask?.cancel()
+        self.startClaudeCredentialRecoveryMonitor()
         self.adaptiveRefreshScheduledAt = nil
         #if DEBUG
         self.fixedRefreshIntervalForTesting = nil
@@ -957,6 +969,7 @@ final class UsageStore {
 
     deinit {
         self.timerTask?.cancel()
+        self.claudeCredentialRecoveryMonitorTask?.cancel()
         self.tokenRefreshSequenceTask?.cancel()
         self.codexCostCatchUpTask?.cancel()
         self.forcedRefreshEnrichmentTask?.cancel()
